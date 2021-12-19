@@ -1,0 +1,69 @@
+#Options +FollowSymLinks
+#IndexIgnore */*
+RewriteEngine on
+
+#### PERSISTENT CONTENT ####
+#RewriteCond %{HTTPS} !on
+#RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+#RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+#RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+#### PERSISTENT CONTENT END ####
+
+# Если запрос начинается с /admin, то заменяем на /backend/web/
+#RewriteCond %{REQUEST_URI} ^/admin
+#RewriteRule ^admin\/?(.*) /backend/web/$1
+
+# Добавляем другой запрос /frontend/web/$1
+#RewriteCond %{REQUEST_URI} !^/(frontend/web|backend/web|admin)
+#RewriteRule (.*) /frontend/web/$1
+
+# Если frontend запрос
+#RewriteCond %{REQUEST_URI} ^/frontend/web
+#RewriteCond %{REQUEST_FILENAME} !-f
+#RewriteCond %{REQUEST_FILENAME} !-d
+#RewriteRule . /frontend/web/index.php
+
+# Если backend запрос
+#RewriteCond %{REQUEST_URI} ^/backend/web
+#RewriteCond %{REQUEST_FILENAME} !-f
+#RewriteCond %{REQUEST_FILENAME} !-d
+#RewriteRule . /backend/web/index.php
+
+<Limit GET POST PUT DELETE>
+    Order allow,deny
+    Allow from all
+</Limit>
+
+<IfModule mod_rewrite.c>
+    Options +FollowSymlinks
+    RewriteEngine On
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteCond %{REQUEST_URI} ^/(api)
+    RewriteRule ^.*$ api/web/$1 [L]
+
+    # deal with admin first
+    RewriteCond %{REQUEST_URI} ^/(admin)
+    RewriteRule ^admin/assets/(.*)$ backend/web/assets/$1 [L]
+    RewriteRule ^admin/css/(.*)$ backend/web/css/$1 [L]
+    RewriteRule ^admin/js/(.*)$ backend/web/js/$1 [L]
+    RewriteRule ^admin/images/(.*)$ backend/web/images/$1 [L]
+
+    RewriteCond %{REQUEST_URI} !^/backend/web/(assets|css)/
+    RewriteCond %{REQUEST_URI} ^/(admin)
+    RewriteRule ^.*$ backend/web/index.php [L]
+
+    RewriteCond %{REQUEST_URI} ^/(assets|css|js|images)
+    RewriteRule ^assets/(.*)$ frontend/web/assets/$1 [L]
+    RewriteRule ^css/(.*)$ frontend/web/css/$1 [L]
+    RewriteRule ^js/(.*)$ frontend/web/js/$1 [L]
+    RewriteRule ^images/(.*)$ frontend/web/images/$1 [L]
+    RewriteRule ^(.*)$ frontend/web/$1 [L]
+
+    RewriteCond %{REQUEST_URI} !^/(frontend|backend)/web/(assets|css|js)/
+    RewriteCond %{REQUEST_URI} !index.php
+    RewriteCond %{REQUEST_FILENAME} !-f [OR]
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^.*$ frontend/web/index.php
+</IfModule>
